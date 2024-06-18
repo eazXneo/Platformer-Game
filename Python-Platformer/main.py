@@ -53,6 +53,50 @@ def get_block(size):
     surface.blit(image, (0, 0), rect)
     return pygame.transform.scale2x(surface)
 
+class GameConfig():
+    def __init__(self):
+        block_size = 96
+
+        self.static_enemies = Fire(200, HEIGHT -  block_size - 64, 16, 32)
+        # this is annoying (make list, turn on by default.)
+        self.static_enemies.on()
+        """
+        floor = [Block(i* block_size, HEIGHT - block_size, block_size) 
+            for i in range(-WIDTH // block_size, (WIDTH * 2) // block_size)]
+        objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), 
+                Block(block_size * 3, HEIGHT - block_size * 4, block_size), fire]
+        """
+        # storey_height = 0
+        # horizontal_distance = 0
+        self.ground = []
+        list_blocks = [ [0,0], [1,0], [2,0], [3,0], [6,0],
+                        [8,2], [9,2], [10,2], [11,0], [12,0],
+                        [12,3], [13,0], [14,0], [16,0], [17,0],
+                        [18,0], [20,1], [21,2], [23,4], [24,4],
+                        [24,1], [25,1], [25,4], [27,0], [28,0],
+                        [30,2], [32,0], [33,0], [36,0], [37,0],
+                        [37,3], [39,0], [39,1], [40,0], [40,1],
+                        [40,2], [42,4], [43,5], [44,5], [46,4],
+                        [46,6], [47,4], [48,4], [49,6],
+                        [51,0], [52,0], [53,0], [54,2]
+                    ]
+        
+        for b in list_blocks:
+            self.ground.append(Block(
+                    100 + (b[0] * block_size), 
+                    HEIGHT - (block_size * (b[1] + 1)), 
+                    block_size))
+        
+        # self.ground = [Block(100, HEIGHT -  block_size, block_size)]
+        self.all_blocks = [*self.ground, self.static_enemies]
+
+    def get_all_blocks(self):
+        return self.all_blocks
+    
+    def get_fire(self):
+        return self.static_enemies
+
+
 class Player(pygame.sprite.Sprite):
     """
     Pygame Sprite allows for methods to detect collisions ... ???
@@ -287,16 +331,11 @@ def handle_move(player, objects):
 def main(window):
     clock = pygame.time.Clock()
     background, bg_image = get_background("Pink.png")
-
-    block_size = 96
-
+    
     player = Player(100, 100, 50, 50)
-    fire = Fire(100, HEIGHT -  block_size - 64, 16, 32)
-    fire.on()
-    floor = [Block(i* block_size, HEIGHT - block_size, block_size) 
-            for i in range(-WIDTH // block_size, (WIDTH * 2) // block_size)]
-    objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), 
-                Block(block_size * 3, HEIGHT - block_size * 4, block_size), fire]
+    gameConfig = GameConfig()
+    fire = gameConfig.get_fire()
+    objects = gameConfig.get_all_blocks()
     
     offset_x = 0
     scroll_area_width = 200
@@ -316,7 +355,7 @@ def main(window):
                     player.jump() 
 
         player.loop(FPS)
-        fire.loop()
+        # fire.loop()
         handle_move(player, objects)
         draw(window, background, bg_image, player, objects, offset_x)
 
