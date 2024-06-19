@@ -55,20 +55,27 @@ def get_block(size):
 
 class GameConfig():
     def __init__(self):
-        block_size = 96
+        self.block_size = 96
 
-        self.static_enemies = Fire(200, HEIGHT -  block_size - 64, 16, 32)
-        # this is annoying (make list, turn on by default.)
-        self.static_enemies.on()
         """
         floor = [Block(i* block_size, HEIGHT - block_size, block_size) 
             for i in range(-WIDTH // block_size, (WIDTH * 2) // block_size)]
         objects = [*floor, Block(0, HEIGHT - block_size * 2, block_size), 
                 Block(block_size * 3, HEIGHT - block_size * 4, block_size), fire]
         """
-        # storey_height = 0
-        # horizontal_distance = 0
-        self.ground = []
+
+        self.ground = self.calc_ground()
+        self.static_enemies = self.calc_static_enemies()
+        
+        # this is annoying (make list, turn on by default.)
+        # self.static_enemies.on()
+
+        # self.ground = [Block(100, HEIGHT -  block_size, block_size)]
+        self.all_blocks = [*self.ground, *self.static_enemies]
+
+    def calc_ground(self):
+        ground = []
+
         list_blocks = [ [0,0], [1,0], [2,0], [3,0], [6,0],
                         [8,2], [9,2], [10,2], [11,0], [12,0],
                         [12,3], [13,0], [14,0], [16,0], [17,0],
@@ -82,19 +89,38 @@ class GameConfig():
                     ]
         
         for b in list_blocks:
-            self.ground.append(Block(
-                    100 + (b[0] * block_size), 
-                    HEIGHT - (block_size * (b[1] + 1)), 
-                    block_size))
-        
-        # self.ground = [Block(100, HEIGHT -  block_size, block_size)]
-        self.all_blocks = [*self.ground, self.static_enemies]
+            ground.append(Block(
+                    100 + (b[0] * self.block_size), 
+                    HEIGHT - (self.block_size * (b[1] + 1)), 
+                    self.block_size))
 
+        return ground
+    
+    def calc_static_enemies(self):
+        s_enemies = []
+
+        list_blocks = [ [5,0], [7,0], [11,1], [12,1], [13,1],
+                        [13,3], [14,1], [24,2], [25,2], [29,2],
+                        [31,2], [32,1], [37,1], [43,6], [46,5],
+                        [47,5], [48,5]
+                    ]
+
+        for b in list_blocks:
+            new_s_enemy = Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 32, 16, 16)
+            s_enemies.append(new_s_enemy)
+
+        return s_enemies
+     
+    def get_static_enemy(self):
+        return self.static_enemies
+    
     def get_all_blocks(self):
         return self.all_blocks
-    
-    def get_fire(self):
-        return self.static_enemies
+
+    def debug_game_config(self):
+        safety_blocks = [Block(-192 + (i * self.block_size), HEIGHT, self.block_size) 
+            for i in range(60)]
+        self.all_blocks += safety_blocks
 
 
 class Player(pygame.sprite.Sprite):
@@ -249,6 +275,17 @@ class Fire(Object):
             self.animation_count = 0
 
 
+class Spike(Object):
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "spike")
+        self.spike = load_sprite_sheets("Traps", "Spikes", width, height)
+        self.image = self.spike["Idle"][0]
+        self.mask = pygame.mask.from_surface(self.image)
+    
+    def draw(self, win, offset_x, angle=0):
+        win.blit(pygame.transform.rotate(self.image, 90), (self.rect.x - offset_x, self.rect.y))
+
+
 def get_background(name):
     """
     returns list of all background tiles that we need to draw
@@ -333,8 +370,12 @@ def main(window):
     background, bg_image = get_background("Pink.png")
     
     player = Player(100, 100, 50, 50)
+    
     gameConfig = GameConfig()
-    fire = gameConfig.get_fire()
+    # DEBUG set
+    gameConfig.debug_game_config()
+
+    # s_enemy = gameConfig.get_static_enemy()[0]
     objects = gameConfig.get_all_blocks()
     
     offset_x = 0
@@ -359,6 +400,7 @@ def main(window):
         handle_move(player, objects)
         draw(window, background, bg_image, player, objects, offset_x)
 
+        # scroll window horizontally
         if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.x_vel > 0) or (
                     (player.rect.left - offset_x <= scroll_area_width) and player.x_vel < 0):
             offset_x += player.x_vel
