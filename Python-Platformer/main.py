@@ -99,16 +99,31 @@ class GameConfig():
     def calc_static_enemies(self):
         s_enemies = []
 
-        list_blocks = [ [5,0], [7,0], [11,1], [12,1], [13,1],
-                        [13,3], [14,1], [24,2], [25,2], [29,2],
-                        [31,2], [32,1], [37,1], [43,6], [46,5],
-                        [47,5], [48,5]
+        list_blocks = [ [5,0,90], [7,0,-90],   [11,1,0],   [12,1,0], 
+                        [13,1,0], [13, 3,-90], [14,1,0],   [24,2,0], 
+                        [25,2,0], [29,2,90],   [31,2,-90], [32,1,0], 
+                        [37,1,0], [43,6,0],    [46,5, 0],  [47,5,0], 
+                        [48,5,0]
                     ]
 
         for b in list_blocks:
-            new_s_enemy = Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 32, 16, 16)
-            s_enemies.append(new_s_enemy)
+            angle = b[2]
 
+            if angle == 0:
+                s_enemies.append(Spike(100 + (b[0] * self.block_size),      HEIGHT - (self.block_size * b[1]) - 32, 16, 16, b[2]))
+                s_enemies.append(Spike(100 + (b[0] * self.block_size) + 32, HEIGHT - (self.block_size * b[1]) - 32, 16, 16, b[2]))
+                s_enemies.append(Spike(100 + (b[0] * self.block_size) + 64, HEIGHT - (self.block_size * b[1]) - 32, 16, 16, b[2]))
+            elif angle == 90:
+                s_enemies.append(Spike(100 + ((b[0]+1) * self.block_size) - 32, HEIGHT - (self.block_size * b[1]) - 32, 16, 16, b[2]))
+                s_enemies.append(Spike(100 + ((b[0]+1) * self.block_size) - 32, HEIGHT - (self.block_size * b[1]) - 64, 16, 16, b[2]))
+                s_enemies.append(Spike(100 + ((b[0]+1) * self.block_size) - 32, HEIGHT - (self.block_size * b[1]) - 96, 16, 16, b[2]))
+            elif angle == 180:
+                # TODO
+                s_enemies.append(Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 32, 16, 16, b[2]))
+            elif angle == -90:
+                s_enemies.append(Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 32, 16, 16, b[2]))
+                s_enemies.append(Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 64, 16, 16, b[2]))
+                s_enemies.append(Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 96, 16, 16, b[2]))
         return s_enemies
      
     def get_static_enemy(self):
@@ -276,14 +291,14 @@ class Fire(Object):
 
 
 class Spike(Object):
-    def __init__(self, x, y, width, height):
+    def __init__(self, x, y, width, height, angle=0):
         super().__init__(x, y, width, height, "spike")
         self.spike = load_sprite_sheets("Traps", "Spikes", width, height)
-        self.image = self.spike["Idle"][0]
+        self.image = pygame.transform.rotate(self.spike["Idle"][0], angle)
         self.mask = pygame.mask.from_surface(self.image)
     
-    def draw(self, win, offset_x, angle=0):
-        win.blit(pygame.transform.rotate(self.image, 90), (self.rect.x - offset_x, self.rect.y))
+    def draw(self, win, offset_x):
+        win.blit(self.image, (self.rect.x - offset_x, self.rect.y))
 
 
 def get_background(name):
