@@ -6,7 +6,7 @@ from os import listdir
 from os.path import isfile, join
 pygame.init()
 
-pygame.display.set_caption("Platformer")
+pygame.display.set_caption("Help, I don't know what to do")
 
 WIDTH, HEIGHT = 1000, 800
 FPS = 60
@@ -125,6 +125,10 @@ class GameConfig():
                 s_enemies.append(Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 64, 16, 16, b[2]))
                 s_enemies.append(Spike(100 + (b[0] * self.block_size), HEIGHT - (self.block_size * b[1]) - 96, 16, 16, b[2]))
         return s_enemies
+    
+    def calc_coins(self):
+        # TODO: remember to center the coins. Potentially
+        pass
      
     def get_static_enemy(self):
         return self.static_enemies
@@ -161,6 +165,8 @@ class Player(pygame.sprite.Sprite):
         self.hit = 0
         self.hit_count = 0
 
+        self.score = 0
+
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
         self.animation_count = 0
@@ -175,6 +181,9 @@ class Player(pygame.sprite.Sprite):
     def make_hit(self):
         self.hit = True
         self.hit_count = 0
+
+    def increase_score(self):
+        self.score += 1
 
     def move_left(self, vel):
         self.x_vel = -vel
@@ -259,6 +268,18 @@ class Block(Object):
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
+
+class Spike(Object):
+    def __init__(self, x, y, width, height, angle=0):
+        super().__init__(x, y, width, height, "spike")
+        self.spike = load_sprite_sheets("Traps", "Spikes", width, height)
+        self.image = pygame.transform.rotate(self.spike["Idle"][0], angle)
+        self.mask = pygame.mask.from_surface(self.image)
+    
+    def draw(self, win, offset_x):
+        win.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+
+
 class Fire(Object):
     ANIMATION_DELAY = 3
 
@@ -290,15 +311,35 @@ class Fire(Object):
             self.animation_count = 0
 
 
-class Spike(Object):
-    def __init__(self, x, y, width, height, angle=0):
-        super().__init__(x, y, width, height, "spike")
-        self.spike = load_sprite_sheets("Traps", "Spikes", width, height)
-        self.image = pygame.transform.rotate(self.spike["Idle"][0], angle)
+class Coin(Object):
+    # ANIMATION_DELAY = 3
+
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height, "coin")
+        self.coin = load_sprite_sheets("Items", "Fruits", width, height)
+        self.image = self.coin["Orange"][0]
         self.mask = pygame.mask.from_surface(self.image)
-    
-    def draw(self, win, offset_x):
-        win.blit(self.image, (self.rect.x - offset_x, self.rect.y))
+        self.animation_count = 0
+        # self.animation_name = "off"
+
+    # def on(self):
+    #     self.animation_name = "on"
+
+    # def off(self):
+    #     self.animation_name = "off"
+
+    # def loop(self):
+    #     sprites = self.fire[self.animation_name]
+    #     sprite_index = (self.animation_count // 
+    #                     self.ANIMATION_DELAY) % len(sprites)
+    #     self.image = sprites[sprite_index]
+    #     self.animation_count += 1
+
+    #     self.rect = self.image.get_rect(topleft=(self.rect.x, self.rect.y))
+    #     self.mask = pygame.mask.from_surface(self.image)
+
+    #     if self.animation_count // self.ANIMATION_DELAY > len(sprites):
+    #         self.animation_count = 0
 
 
 def get_background(name):
@@ -376,9 +417,17 @@ def handle_move(player, objects):
     vertical_collide = handle_vertical_collision(player, objects, player.y_vel)
     # remember handle_vertical_collision() returns a list and collide() returns only one object
     to_check = [collide_left, collide_right, *vertical_collide]
+    # TODO: Group() as a pygame class to create same behaviour for same type
+    #  of object?!
+    #  https://www.youtube.com/watch?v=0fXe-ij2ehc&list=PLjcN1EyupaQnHM1I9SmiXfbT6aG4ezUvu&index=11&ab_channel=CodingWithRuss
     for obj in to_check:
-        if obj and obj.name == "fire":
+        if obj and obj.name == "spike":
             player.make_hit()
+        # TODO: if hit coin then do something
+        elif obj and obj.name == "coin":
+            player.increase_score()
+            print("New score:", player.score)
+            del obj
 
 def main(window):
     clock = pygame.time.Clock()
@@ -389,9 +438,18 @@ def main(window):
     gameConfig = GameConfig()
     # DEBUG set
     gameConfig.debug_game_config()
-
+ 
     # s_enemy = gameConfig.get_static_enemy()[0]
     objects = gameConfig.get_all_blocks()
+
+    # DEBUG
+    objects.append(Coin(200,600,32,32))
+    objects.append(Coin(400,600,32,32))
+    # coin_group = pygame.sprite.Group()
+    # coin_group.add(Coin(200,600,32,32))
+    # coin_group.add(Coin(400,600,32,32))
+    # objects.append(coin_group)
+    # TODO: add these to GameConfig.
     
     offset_x = 0
     scroll_area_width = 200
