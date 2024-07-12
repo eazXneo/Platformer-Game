@@ -1,3 +1,6 @@
+# TODO: credit tutorials: Tim, 
+#  assets: Tim's assessts, the coin assessts
+
 import os
 import random
 import math
@@ -404,6 +407,7 @@ def handle_move(player, objects):
     keys = pygame.key.get_pressed()
 
     player.x_vel = 0
+    # TODO: the next two lines might have the collision padding thingy...
     collide_left = collide(player, objects, -PLAYER_VEL * 2)
     collide_right = collide(player, objects, PLAYER_VEL * 2)
 
@@ -420,14 +424,22 @@ def handle_move(player, objects):
     # TODO: Group() as a pygame class to create same behaviour for same type
     #  of object?!
     #  https://www.youtube.com/watch?v=0fXe-ij2ehc&list=PLjcN1EyupaQnHM1I9SmiXfbT6aG4ezUvu&index=11&ab_channel=CodingWithRuss
+    # print(to_check)
+
+    coin_to_remove = None
     for obj in to_check:
         if obj and obj.name == "spike":
             player.make_hit()
         # TODO: if hit coin then do something
         elif obj and obj.name == "coin":
-            player.increase_score()
-            print("New score:", player.score)
-            del obj
+            # print([x for x in objects if type(x)==Coin])
+            # print(obj)
+            coin_to_remove = obj
+            
+    if coin_to_remove: 
+        objects.remove(coin_to_remove)
+        player.increase_score()
+        print("New score:", player.score)
 
 def main(window):
     clock = pygame.time.Clock()
