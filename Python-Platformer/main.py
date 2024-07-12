@@ -7,7 +7,9 @@ import math
 import pygame
 from os import listdir
 from os.path import isfile, join
+
 pygame.init()
+font = pygame.font.Font(pygame.font.get_default_font(), 24)  # TODO: instead of get default, I'm assuming you give the path to a font.
 
 pygame.display.set_caption("Help, I don't know what to do")
 
@@ -373,6 +375,11 @@ def draw(window, background, bg_image, player, objects, offset_x):
 
     player.draw(window, offset_x)
 
+    # player information display
+    score_text = font.render(("Score: " + str(player.score)), True, (255,0,0), (0,0,0))
+    score_text_rect = score_text.get_rect()
+    window.blit(score_text, score_text_rect)
+
     pygame.display.update()
 
 def handle_vertical_collision(player, objects, dy):
@@ -489,6 +496,8 @@ def main(window):
         if ((player.rect.right - offset_x >= WIDTH - scroll_area_width) and player.x_vel > 0) or (
                     (player.rect.left - offset_x <= scroll_area_width) and player.x_vel < 0):
             offset_x += player.x_vel
+
+        
     
     pygame.quit()
     quit()
